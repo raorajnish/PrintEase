@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home
+        {% block title %}PrintEase
+        {% endblock title %}
+    </title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+    <script src="{% static 'js/script.js' %}" defer></script>
+</head>
+<body>
+    <nav>
+        <h2 title="Home">PrintEase</h2>
+
+        {% if user.is_authenticated %}
+            {% if user.is_shop %}
+                <!-- If the user is a shop -->
+                <a href="{% url 'app:shop-dashboard' %}"><i class="ri-menu-fill"></i> Shop Dashboard</a>
+            {% elif user.is_user %}
+                <!-- If the user is a regular user -->
+                <a href="{% url 'app:user-dashboard' %}"><i class="ri-menu-fill"></i> User Dashboard</a>
+            {% endif %}
+            <h2>{{ request.user|capfirst }}</h2>
+            <form action="{% url 'users:logout' %}" method="post">
+                {% csrf_token %}
+                <button class="" title="Logout"><h2><i class="ri-logout-box-r-line"></i> Logout</h2></button>
+            </form>
+        {% else %}
+            <a href="/" title="Home"><i class="ri-home-4-line"></i> Home</a>
+            <a href="{% url 'users:login' %}"><i class="ri-login-circle-line"></i> Login</a>
+            <a href="{% url 'users:user_register' %}" title="User Registration"><i class="ri-user-4-line"></i> User</a>
+            <a href="{% url 'users:shop_register' %}" title="Shop Registration"><i class="ri-store-2-line"></i> Shop</a>
+        {% endif %}
+    </nav>
+
+    {% block content %}
+    <div id="home">
+        <h1>Home Page</h1>
+    </div>
+    {% endblock content %}
+</body>
+</html>

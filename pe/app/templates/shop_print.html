@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">{{ shop.shop_name }}</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <p><strong>Owner:</strong> {{ shop.owner_name }}</p>
+            <p><strong>Contact:</strong> {{ shop.contact_number }}</p>
+            <p><strong>City:</strong> {{ shop.city }}</p>
+            <p><strong>Print Prices:</strong> B/W - ₹{{ shop.bw_price }} | Color - ₹{{ shop.color_price }}</p>
+            <br>
+            <button class="btn btn-success mt-3" id="upload-print-btn">Upload & Print</button>
+        </div>
+    </div>
+    <br>
+    <!-- Hidden Print Form Section -->
+    <div id="print-form-section" class="mt-4" style="display: none;">
+        <h3>Upload Print Files</h3>
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div id="file-upload-container">
+                <div class="file-upload-form">
+                    <input type="file" name="document[]" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx" required>
+                    <select name="page_option" class="form-control page-option">
+                        <option value="full">Full Document</option>
+                        <option value="custom">Custom Pages</option>
+                    </select>
+                    <input type="text" name="custom_pages" class="form-control custom-pages" placeholder="Enter page numbers (e.g., 1-3,5,7-10)" style="display: none;">
+                    <input type="number" name="copies" class="form-control copies" min="1" value="1">
+                    <select name="print_type" class="form-control">
+                        <option value="bw">Black & White</option>
+                        <option value="color">Color</option>
+                    </select>
+                    <select name="side_option" class="form-control">
+                        <option value="single">Single-Sided</option>
+                        <option value="double">Double-Sided</option>
+                    </select>
+                    <p class="calculated-price text-primary">Price: ₹0</p>
+                </div>
+            </div>
+            <br>
+            <button type="button" id="add-more-files" class="btn btn-secondary mt-3">Add More Files</button><br>
+            <button type="submit" class="btn btn-primary mt-3">Proceed to Checkout</button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById("upload-print-btn").addEventListener("click", function() {
+    document.getElementById("print-form-section").style.display = "block";
+});
+
+document.addEventListener("change", function(event) {
+    if (event.target.classList.contains("page-option")) {
+        let customInput = event.target.closest(".file-upload-form").querySelector(".custom-pages");
+        if (event.target.value === "custom") {
+            customInput.style.display = "block";
+        } else {
+            customInput.style.display = "none";
+            customInput.value = "";
+        }
+    }
+});
+
+document.getElementById("add-more-files").addEventListener("click", function() {
+    let container = document.getElementById("file-upload-container");
+    let newForm = container.firstElementChild.cloneNode(true);
+    newForm.querySelector(".custom-pages").style.display = "none";
+    newForm.querySelector(".custom-pages").value = "";
+    container.appendChild(newForm);
+});
+</script>
+{% endblock %}
+
+

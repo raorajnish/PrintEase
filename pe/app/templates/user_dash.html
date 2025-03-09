@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}
+Student dashboard
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Available Print Shops</h2>
+    <div class="row">
+        {% for shop in shops %}
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ shop.shop_name }}</h5>
+                        <p class="card-text"><strong>Owner:</strong> {{ shop.owner_name }}</p>
+                        <p class="card-text"><strong>City:</strong> {{ shop.city }}</p>
+                        <p class="card-text"><strong>Contact:</strong> {{ shop.contact_number }}</p>
+                        <p class="card-text"><strong>Area:</strong> {{ shop.area }}</p>
+                        <p class="card-text"><strong>B/W Price:</strong> {{shop.bw_price}} Rs</p>
+                        <p class="card-text"><strong>Color Price:</strong> {{ shop.color_price }} Rs</p>
+                        <a href="{% url 'app:shop-print' shop.id %}" class="btn btn-primary">Select Shop</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-danger">No registered print shops available.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
