@@ -25,9 +25,12 @@ SECRET_KEY = 'django-insecure-1di3yzj8oqbdmap^yo6dw9#hlp6t8-vvbl&3h2s-y1l2-3erpz
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-
-
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'super20-gsua.onrender.com',
+    '*',
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -119,8 +122,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'        # <- required by collectstatic
+STATICFILES_DIRS = [BASE_DIR / 'static']      # optional: local static source directories
+
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR/'media'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
