@@ -28,17 +28,23 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'super20-gsua.onrender.com',
     '*',
     'printease-3fwx.onrender.com',
 ]
 # Application definition
 
+# Add Render hostname if available
+if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
+    ALLOWED_HOSTS.append(os.environ.get('RENDER_EXTERNAL_HOSTNAME'))
 
-# CSRF settings for production
+# CSRF settings for production (FIXED - removed trailing slash)
 CSRF_TRUSTED_ORIGINS = [
-    'https://printease-3fwx.onrender.com/',
+    'https://printease-3fwx.onrender.com',
 ]
+
+# Add Render hostname to CSRF trusted origins
+if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}")
 
 INSTALLED_APPS = [
     'users',

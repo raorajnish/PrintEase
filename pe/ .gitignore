@@ -1,0 +1,79 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+env/
+venv/
+.venv/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Django stuff
+*.log
+*.pot
+*.py,cover
+local_settings.py
+
+# Django collected static files (if using collectstatic)
+staticfiles/
+static_root/
+
+# Media uploads
+media/
+pe/media/
+
+# SQLite databases
+*.sqlite3
+pe/db.sqlite3
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache/
+.pytest_cache/
+.coverage.*
+
+# MyPy / Pyright
+.mypy_cache/
+.pytype/
+.pyright/
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.orig
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env files / secrets
+.env
+.env.*
+*.env
+
+# Node (if present)
+node_modules/
+
+# Logs and dumps
+*.log
+*.out
+*.err
+
+# Generated PDFs or temp docs (optional)
+*.tmp
+*.temp
+~$*
