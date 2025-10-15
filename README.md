@@ -1,94 +1,241 @@
-# PrintEase
+# PrintEase - Print Shop Management Platform
 
-PrintEase is an online document printing service where users can upload multiple PDF and DOCX files, customize their print preferences, and proceed to checkout. The system automatically calculates the total price based on the number of pages and print type (Black & White or Color). Orders and payments are managed within the platform.
+PrintEase is a Django-based web application that connects users with print shops for document printing services. The platform facilitates seamless interaction between customers and print shop owners, enabling users to upload documents, specify printing requirements, and get instant pricing estimates.
 
-## Features
+## 🚀 Features
 
-- **User Authentication:** Users can sign up, log in, and manage their orders.
-- **Upload Multiple Documents:** Accepts PDFs and DOCX files.
-- **Automatic Page Count Detection:** Extracts page numbers from the uploaded file.
-- **Custom Page Selection:** Validates and allows users to print specific pages.
-- **Dynamic Price Calculation:** Based on print type (B&W or Color) and total pages.
-- **Order Management:** Associates print files with orders linked to users.
-- **Payment Integration:** Uses Razorpay for payments.
-- **Admin Panel:** Manage orders and update statuses (Pending, Confirmed, Ready to Take, Cancelled).
+### For Users
+- **Browse Print Shops**: View available print shops in the area
+- **Document Upload**: Upload multiple documents (PDF, DOCX, etc.) for printing
+- **Customizable Printing Options**:
+  - Black & White or Color printing
+  - Single or Double-sided printing
+  - Custom page selection
+  - Multiple copies
+- **Instant Price Calculation**: Real-time pricing based on shop rates
+- **User Registration & Authentication**: Secure login/logout system
 
-## Installation
+### For Print Shop Owners
+- **Shop Profile Management**: Complete shop details with location and contact information
+- **Pricing Configuration**: Set rates for black & white and color printing
+- **Operating Hours**: Define business hours
+- **Email Notifications**: Receive confirmation emails for profile updates
+- **Dashboard**: Manage shop information and view orders
 
-1. **Clone the Repository:**
+## 🛠️ Technology Stack
+
+- **Backend**: Django 5.1.6
+- **Database**: SQLite3
+- **Frontend**: HTML5, CSS3, JavaScript
+- **Icons**: Remix Icons
+- **File Processing**: PyPDF2, python-docx
+- **Email**: SMTP (Gmail)
+
+## 📁 Project Structure
+
+```
+printease1/
+├── pe/                          # Main Django project
+│   ├── app/                     # Core application
+│   │   ├── models.py           # Shop details and business logic
+│   │   ├── views.py            # Main application views
+│   │   ├── forms.py            # Shop details form
+│   │   ├── templates/          # HTML templates
+│   │   └── static/             # CSS, JS, Images
+│   ├── users/                  # User authentication app
+│   │   ├── models.py          # Custom user model
+│   │   ├── views.py           # Authentication views
+│   │   └── templates/         # User templates
+│   ├── pe/                    # Django settings
+│   │   ├── settings.py        # Project configuration
+│   │   └── urls.py           # Main URL routing
+│   └── manage.py              # Django management
+├── requirements.txt            # Python dependencies
+└── README.md                  # This file
+```
+
+## 🗄️ Database Models
+
+### User Model (Custom)
+- `is_admin`: Admin privileges
+- `is_user`: Regular user privileges  
+- `is_shop`: Print shop owner privileges
+
+### ShopDetails Model
+- **Basic Info**: Shop name, owner name, contact number
+- **Location**: Area, city, state, pincode (Indian states supported)
+- **Business Details**: GSTIN, operating hours
+- **Pricing**: Black & white and color print rates
+- **Status**: Details completion tracking
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+- Python 3.8+
+- pip (Python package manager)
+
+### Installation Steps
+
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/raorajnish/PrintEase.git
-   cd PrintEase
+   git clone <repository-url>
+   cd printease1
    ```
-2. **Create a Virtual Environment (Recommended):**
+
+2. **Create and activate virtual environment**
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On macOS/Linux
-   venv\Scripts\activate  # On Windows
+   python -m venv env
+   # On Windows
+   env\Scripts\activate
+   # On macOS/Linux
+   source env/bin/activate
    ```
-3. **Install Dependencies:**
+
+3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
-4. **Apply Migrations:**
+
+4. **Run database migrations**
    ```bash
+   cd pe
    python manage.py makemigrations
    python manage.py migrate
    ```
-5. **Create Superuser (Optional - For Admin Access):**
+
+5. **Create superuser (optional)**
    ```bash
    python manage.py createsuperuser
    ```
-6. **Run Development Server:**
+
+6. **Run the development server**
    ```bash
    python manage.py runserver
    ```
 
-## Dependencies
+7. **Access the application**
+   - Open your browser and go to `http://127.0.0.1:8000/`
 
-The required dependencies are included in `requirements.txt`. Key packages used:
-- Django
-- Pillow (for handling document uploads)
-- PyPDF2 (for extracting page count from PDFs)
-- python-docx (for extracting page count from DOCX files)
-- Razorpay (for payment integration)
+## 📧 Email Configuration
 
-## Usage
+The application uses Gmail SMTP for sending emails. Update the following settings in `pe/pe/settings.py`:
 
-- **Upload Print Files:** Users can upload PDFs and DOCX files, select print options, and proceed to checkout.
-- **Checkout and Payment:** After verifying order details, users can complete payment using Razorpay.
-- **Order Management:** Users can view their past orders and track their status.
+```python
+EMAIL_HOST_USER = 'your-email@gmail.com'
+EMAIL_HOST_PASSWORD = 'your-app-password'
+DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
+```
 
-## API Endpoints
+**Note**: Use Gmail App Password, not your regular password.
 
-| Method | Endpoint         | Description |
-|--------|----------------|-------------|
-| GET    | `/upload/`      | Upload print files page |
-| POST   | `/upload/`      | Submit multiple files |
-| GET    | `/checkout/`    | Checkout page with order details |
-| POST   | `/payment/`     | Handle payment processing |
-| GET    | `/orders/`      | View past orders |
+## 🎨 Key Features Explained
 
-## Troubleshooting
+### User Authentication System
+- Custom user model with role-based access
+- Separate registration for users and shop owners
+- Secure login/logout functionality
 
-- **Page count not detected?** Ensure that the file format is correct (PDF or DOCX only).
-- **Payment issues?** Check Razorpay settings in `settings.py`.
-- **Server not starting?** Verify dependencies are installed (`pip install -r requirements.txt`).
+### Print Shop Management
+- Shop owners can register and provide detailed information
+- Location-based shop discovery
+- Pricing transparency with instant calculations
 
-## Future Enhancements
+### Document Processing
+- Support for multiple file formats (PDF, DOCX)
+- Page counting and custom page selection
+- File upload with secure storage
 
-- Allow users to reorder past print files.
-- Support additional document formats (e.g., PPT, ODT).
-- Implement real-time order tracking notifications.
+### Real-time Pricing
+- Dynamic price calculation based on:
+  - Number of pages
+  - Print type (B/W or Color)
+  - Number of copies
+  - Shop-specific rates
+- **Note**: Payment integration will be added in future updates
 
-## License
+## 🔧 Configuration
 
-This project is open-source under the MIT License.
+### Environment Variables
+Create a `.env` file in the project root for sensitive data:
 
-## Contributing
+```env
+SECRET_KEY=your-secret-key
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+```
 
-Pull requests are welcome! Open an issue for feature requests or bug reports.
+### Database Configuration
+The project uses SQLite by default. For production, consider PostgreSQL or MySQL.
+
+## 🧪 Testing
+
+Run the test suite:
+```bash
+python manage.py test
+```
+
+## 📱 Responsive Design
+
+The application features a responsive design that works on:
+- Desktop computers
+- Tablets
+- Mobile devices
+
+## 🔒 Security Features
+
+- CSRF protection enabled
+- Secure file upload handling
+- Input validation and sanitization
+- Role-based access control
+
+## 🚀 Deployment
+
+### Production Checklist
+1. Set `DEBUG = False` in settings
+2. Configure production database
+3. Set up proper email backend
+4. Configure static file serving
+5. Set up HTTPS
+6. Update `ALLOWED_HOSTS`
+
+### Recommended Deployment Options
+- **Heroku**: Easy deployment with PostgreSQL
+- **DigitalOcean**: VPS with Nginx and Gunicorn
+- **AWS**: Elastic Beanstalk or EC2
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 👥 Team
+
+- **Developer**: [Your Name]
+- **Project**: PrintEase
+- **Version**: 1.0.0
+
+## 📞 Support
+
+For support and questions:
+- Email: pe.printease@gmail.com
+- Create an issue in the repository
+
+## 🔄 Future Enhancements
+
+- [ ] Payment gateway integration (Razorpay)
+- [ ] Order tracking system
+- [ ] Mobile app development
+- [ ] Advanced analytics dashboard
+- [ ] Multi-language support
+- [ ] API for third-party integrations
 
 ---
 
-Happy printing with PrintEase! 🖨️🚀
+**PrintEase** - Making printing services accessible and convenient for everyone! 🖨️✨
