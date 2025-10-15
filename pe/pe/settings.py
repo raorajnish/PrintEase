@@ -34,6 +34,12 @@ ALLOWED_HOSTS = [
 ]
 # Application definition
 
+
+# CSRF settings for production
+CSRF_TRUSTED_ORIGINS = [
+    'https://printease-3fwx.onrender.com/',
+]
+
 INSTALLED_APPS = [
     'users',
     'django.contrib.admin',
