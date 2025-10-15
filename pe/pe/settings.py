@@ -30,6 +30,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'super20-gsua.onrender.com',
     '*',
+    'printease-3fwx.onrender.com',
 ]
 # Application definition
 
