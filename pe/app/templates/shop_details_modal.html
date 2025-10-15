@@ -1,0 +1,136 @@
+{% load static %}
+
+<div class="shop-details-modal">
+    <!-- Shop Header -->
+    <div class="shop-details-header">
+        <div class="shop-details-icon">
+            <i class="ri-store-2-line"></i>
+        </div>
+        <div class="shop-details-info">
+            <h3 class="shop-details-name">{{ shop.shop_name }}</h3>
+            <p class="shop-details-owner">
+                <i class="ri-user-line me-2"></i>{{ shop.owner_name }}
+            </p>
+        </div>
+        <div class="shop-details-status">
+            <span class="status-badge online">Online</span>
+        </div>
+    </div>
+
+    <!-- Shop Details Grid -->
+    <div class="shop-details-grid">
+        <!-- Contact Information -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="ri-phone-line me-2"></i>Contact Information
+            </h4>
+            <div class="details-content">
+                <div class="detail-item">
+                    <span class="detail-label">Phone Number:</span>
+                    <span class="detail-value">{{ shop.contact_number }}</span>
+                </div>
+                {% if shop.gstin %}
+                <div class="detail-item">
+                    <span class="detail-label">GSTIN:</span>
+                    <span class="detail-value">{{ shop.gstin }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Location Information -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="ri-map-pin-line me-2"></i>Location
+            </h4>
+            <div class="details-content">
+                <div class="detail-item">
+                    <span class="detail-label">Area:</span>
+                    <span class="detail-value">{{ shop.area }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">City:</span>
+                    <span class="detail-value">{{ shop.city }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">State:</span>
+                    <span class="detail-value">{{ state_name }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Pincode:</span>
+                    <span class="detail-value">{{ shop.pincode }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Hours -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="ri-time-line me-2"></i>Business Hours
+            </h4>
+            <div class="details-content">
+                <div class="detail-item">
+                    <span class="detail-label">Opening Time:</span>
+                    <span class="detail-value">{{ shop.start_time|time:"H:i" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Closing Time:</span>
+                    <span class="detail-value">{{ shop.end_time|time:"H:i" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value">
+                        {% if shop.details_filled %}
+                            <span class="badge bg-success">Complete Profile</span>
+                        {% else %}
+                            <span class="badge bg-warning">Profile Incomplete</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Information -->
+        <div class="details-section pricing-section">
+            <h4 class="section-title">
+                <i class="ri-money-dollar-circle-line me-2"></i>Printing Rates
+            </h4>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-icon">
+                        <i class="ri-file-text-line"></i>
+                    </div>
+                    <div class="pricing-info">
+                        <h5>Black & White</h5>
+                        <div class="pricing-amount">
+                            ₹{{ shop.bw_price|default:"--" }}
+                            <span class="pricing-unit">per page</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-icon">
+                        <i class="ri-palette-line"></i>
+                    </div>
+                    <div class="pricing-info">
+                        <h5>Color Print</h5>
+                        <div class="pricing-amount">
+                            ₹{{ shop.color_price|default:"--" }}
+                            <span class="pricing-unit">per page</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="shop-details-actions">
+        <a href="{% url 'app:shop-print' shop.id %}" class="btn btn-primary btn-select-shop">
+            <i class="ri-arrow-right-line me-2"></i>Select This Shop
+        </a>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="ri-close-line me-2"></i>Close
+        </button>
+    </div>
+</div> 

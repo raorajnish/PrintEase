@@ -1,49 +1,346 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Shop Dashboard - PrintEase{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-3">Shop Dashboard</h2>
-    <p>Welcome back, <strong>{{ request.user.username|default:"User" }}</strong>.</p>
-    <p>Your email is <strong>{{ request.user.email }}</strong>.</p>
-    <br>
-
-    {% if shop_details %}
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">{{ shop_details.shop_name }}</h5>
-                <p class="card-text"><strong>Owner:</strong> {{ shop_details.owner_name }}</p>
-                <p class="card-text"><strong>Contact:</strong> {{ shop_details.contact_number }}</p>
-                <p class="card-text"><strong>GSTIN:</strong> {{ shop_details.gstin|default:"Not Provided" }}</p>
-                
-                <h4 class="mt-3">Address</h4>
-                <p class="card-text"><strong>Area:</strong> {{ shop_details.area }}</p>
-                <p class="card-text"><strong>City:</strong> {{ shop_details.city }}</p>
-                <p class="card-text"><strong>State:</strong> {{ shop_details.state }}</p>
-                <p class="card-text"><strong>Pincode:</strong> {{ shop_details.pincode }}</p>
-
-                <h4 class="mt-3">Timings</h4>
-                <p class="card-text"><strong>Open Time:</strong> {{ shop_details.start_time }}</p>
-                <p class="card-text"><strong>Close Time:</strong> {{ shop_details.end_time }}</p>
-
-                <h4 class="mt-3">Printing Prices</h4>
-                <p class="card-text"><strong>Black & White Print Price:</strong> ₹{{ shop_details.bw_price|default:"Not Provided" }} per page</p>
-                <p class="card-text"><strong>Color Print Price:</strong> ₹{{ shop_details.color_price|default:"Not Provided" }} per page</p>
-
-                <p class="card-text mt-3">
-                    <strong>Status:</strong> 
-                    {% if shop_details.details_filled %}
-                        <span class="text-success">Complete</span>
-                    {% else %}
-                        <span class="text-danger">Incomplete</span>
-                    {% endif %}
-                </p>
-                
-                <a href="{% url 'app:shop-details-form' %}" class="btn btn-primary">Edit Details</a>
+<div class="shop-dashboard-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="dashboard-title">
+                        <i class="ri-store-2-line me-3"></i>Shop Dashboard
+                    </h1>
+                    <p class="dashboard-subtitle">Welcome back, {{ request.user.username|default:"User" }}</p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="dashboard-actions">
+                        <a href="{% url 'app:shop-details-form' %}" class="btn btn-outline-primary text-white">
+                            <i class="ri-edit-line me-2"></i>Edit Details
+                        </a>
+                        <a href="{% url 'app:analytics' %}" class="btn btn-outline-success text-white">
+                            <i class="ri-bar-chart-line me-2"></i>Analytics
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-    {% else %}
-        <p class="text-danger">Shop details not found. Please add your shop details.</p>
-        <a href="{% url 'add_shop_details' %}" class="btn btn-success">Add Shop Details</a>
-    {% endif %}
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="ri-file-list-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">{{ total_orders|default:0 }}</h3>
+                            <p class="stat-label">Total Orders</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="ri-money-dollar-circle-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">₹{{ total_earnings|default:0 }}</h3>
+                            <p class="stat-label">Total Earnings</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="ri-file-text-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">{{ total_pages|default:0 }}</h3>
+                            <p class="stat-label">Pages Printed</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="ri-time-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 class="stat-number">{{ pending_orders|default:0 }}</h3>
+                            <p class="stat-label">Pending Orders</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="dashboard-content">
+        <div class="container">
+            <div class="row">
+                <!-- Shop Information -->
+                <div class="col-lg-4">
+                    <div class="shop-info-card">
+                        <div class="card-header">
+                            <h3><i class="ri-store-2-line me-2"></i>Shop Information</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if shop_details %}
+                                <div class="shop-details">
+                                    <h4 class="shop-name">{{ shop_details.shop_name }}</h4>
+                                    <p class="shop-owner">
+                                        <i class="ri-user-line me-2"></i>{{ shop_details.owner_name }}
+                                    </p>
+                                    <p class="shop-contact">
+                                        <i class="ri-phone-line me-2"></i>{{ shop_details.contact_number }}
+                                    </p>
+                                    {% if shop_details.gstin %}
+                                        <p class="shop-gstin">
+                                            <i class="ri-file-text-line me-2"></i>GSTIN: {{ shop_details.gstin }}
+                                        </p>
+                                    {% endif %}
+                                    
+                                    <div class="shop-location">
+                                        <h5><i class="ri-map-pin-line me-2"></i>Location</h5>
+                                        <p>{{ shop_details.area }}, {{ shop_details.city }}</p>
+                                        <p>{{ shop_details.state }}, {{ shop_details.pincode }}</p>
+                                    </div>
+                                    
+                                    <div class="shop-timings">
+                                        <h5><i class="ri-time-line me-2"></i>Business Hours</h5>
+                                        <p>{{ shop_details.start_time|time:"H:i" }} - {{ shop_details.end_time|time:"H:i" }}</p>
+                                    </div>
+                                    
+                                    <div class="shop-pricing">
+                                        <h5><i class="ri-money-dollar-circle-line me-2"></i>Printing Prices</h5>
+                                        <p><strong>B/W:</strong> ₹{{ shop_details.bw_price|default:"--" }} per page</p>
+                                        <p><strong>Color:</strong> ₹{{ shop_details.color_price|default:"--" }} per page</p>
+                                    </div>
+                                    
+                                    <div class="shop-status">
+                                        <span class="status-badge {% if shop_details.details_filled %}status-complete{% else %}status-incomplete{% endif %}">
+                                            {% if shop_details.details_filled %}
+                                                <i class="ri-check-line me-1"></i>Complete Profile
+                                            {% else %}
+                                                <i class="ri-error-warning-line me-1"></i>Incomplete Profile
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="no-shop-details">
+                                    <i class="ri-error-warning-line"></i>
+                                    <h4>Shop Details Not Found</h4>
+                                    <p>Please add your shop details to get started.</p>
+                                    <a href="{% url 'app:shop-details-form' %}" class="btn btn-primary">
+                                        <i class="ri-add-line me-2"></i>Add Shop Details
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="col-lg-8">
+                    <div class="orders-card">
+                        <div class="card-header">
+                            <h3><i class="ri-file-list-line me-2"></i>Recent Orders</h3>
+                            <div class="header-actions">
+                                <button class="btn btn-sm btn-outline-primary" onclick="refreshOrders()">
+                                    <i class="ri-refresh-line me-1"></i>Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_orders %}
+                                <div class="orders-list">
+                                    {% for order in recent_orders %}
+                                        <div class="order-item">
+                                            <div class="order-info">
+                                                <div class="order-number">{{ order.order_number }}</div>
+                                                <div class="order-customer">{{ order.user.username }}</div>
+                                                <div class="order-date">{{ order.created_at|date:"M d, Y H:i" }}</div>
+                                                <div class="order-amount">₹{{ order.total_amount }}</div>
+                                            </div>
+                                            <div class="order-status">
+                                                <span class="status-badge status-{{ order.status }}">
+                                                    {{ order.get_status_display }}
+                                                </span>
+                                            </div>
+                                            <div class="order-actions">
+                                                <button class="btn btn-sm btn-outline-primary btn-view-order" data-order-id="{{ order.id }}">
+                                                    <i class="ri-eye-line"></i>
+                                                </button>
+                                                {% if order.status == 'pending' %}
+                                                    <button class="btn btn-sm btn-success btn-confirm-order" data-order-id="{{ order.id }}">
+                                                        <i class="ri-check-line"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger btn-reject-order" data-order-id="{{ order.id }}">
+                                                        <i class="ri-close-line"></i>
+                                                    </button>
+                                                {% elif order.status == 'confirmed' %}
+                                                    <button class="btn btn-sm btn-warning btn-process-order" data-order-id="{{ order.id }}">
+                                                        <i class="ri-printer-line"></i>
+                                                    </button>
+                                                {% elif order.status == 'processing' %}
+                                                    <button class="btn btn-sm btn-info btn-ready-order" data-order-id="{{ order.id }}">
+                                                        <i class="ri-check-double-line"></i>
+                                                    </button>
+                                                {% elif order.status == 'ready' %}
+                                                    <button class="btn btn-sm btn-success btn-complete-order" data-order-id="{{ order.id }}">
+                                                        <i class="ri-check-line"></i>
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="view-all-orders">
+                                    <a href="{% url 'app:shop-orders' %}" class="btn btn-outline-primary">
+                                        <i class="ri-file-list-line me-2"></i>View All Orders
+                                    </a>
+                                </div>
+                            {% else %}
+                                <div class="no-orders">
+                                    <i class="ri-file-list-line"></i>
+                                    <h4>No Orders Yet</h4>
+                                    <p>You haven't received any orders yet. They will appear here when customers place orders.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Order details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// View order details
+document.querySelectorAll('.btn-view-order').forEach(button => {
+    button.addEventListener('click', function() {
+        const orderId = this.getAttribute('data-order-id');
+        
+        // Show loading state
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+        const modalBody = document.querySelector('#orderDetailsModal .modal-body');
+        modalBody.innerHTML = '<div class="text-center"><i class="ri-loader-4-line fa-spin" style="font-size: 2rem; color: #0891b2;"></i><p class="mt-2">Loading order details...</p></div>';
+        modal.show();
+        
+        // Load order details via AJAX
+        fetch(`/order-details/${orderId}/`)
+            .then(response => response.text())
+            .then(html => {
+                modalBody.innerHTML = html;
+            })
+            .catch(error => {
+                modalBody.innerHTML = '<div class="text-center text-danger"><i class="ri-error-warning-line" style="font-size: 2rem;"></i><p class="mt-2">Error loading order details. Please try again.</p></div>';
+            });
+    });
+});
+
+// Update order status functions
+function updateOrderStatus(orderId, newStatus) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/update-order-status/${orderId}/`;
+    
+    // Add CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    // Add status
+    const statusInput = document.createElement('input');
+    statusInput.type = 'hidden';
+    statusInput.name = 'status';
+    statusInput.value = newStatus;
+    form.appendChild(statusInput);
+    
+    // Submit the form
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Confirm order
+document.querySelectorAll('.btn-confirm-order').forEach(button => {
+    button.addEventListener('click', function() {
+        const orderId = this.getAttribute('data-order-id');
+        if (confirm('Confirm this order?')) {
+            updateOrderStatus(orderId, 'confirmed');
+        }
+    });
+});
+
+// Reject order
+document.querySelectorAll('.btn-reject-order').forEach(button => {
+    button.addEventListener('click', function() {
+        const orderId = this.getAttribute('data-order-id');
+        if (confirm('Reject this order?')) {
+            updateOrderStatus(orderId, 'cancelled');
+        }
+    });
+});
+
+// Process order
+document.querySelectorAll('.btn-process-order').forEach(button => {
+    button.addEventListener('click', function() {
+        const orderId = this.getAttribute('data-order-id');
+        if (confirm('Start processing this order?')) {
+            updateOrderStatus(orderId, 'processing');
+        }
+    });
+});
+
+// Ready order
+document.querySelectorAll('.btn-ready-order').forEach(button => {
+    button.addEventListener('click', function() {
+        const orderId = this.getAttribute('data-order-id');
+        if (confirm('Mark order as ready for pickup?')) {
+            updateOrderStatus(orderId, 'ready');
+        }
+    });
+});
+
+// Complete order
+document.querySelectorAll('.btn-complete-order').forEach(button => {
+    button.addEventListener('click', function() {
+        const orderId = this.getAttribute('data-order-id');
+        if (confirm('Mark order as completed?')) {
+            updateOrderStatus(orderId, 'completed');
+        }
+    });
+});
+
+// Refresh orders
+function refreshOrders() {
+    location.reload();
+}
+</script>
 {% endblock %}

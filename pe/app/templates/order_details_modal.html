@@ -1,0 +1,203 @@
+{% load static %}
+
+<div class="order-details-modal">
+    <!-- Order Header -->
+    <div class="order-details-header">
+        <div class="order-details-icon">
+            <i class="ri-file-list-line"></i>
+        </div>
+        <div class="order-details-info">
+            <h3 class="order-details-number">{{ order.order_number }}</h3>
+            <p class="order-details-shop">
+                <i class="ri-store-2-line me-2"></i>{{ order.shop.shop_name }}
+            </p>
+            <p class="order-details-date">
+                <i class="ri-calendar-line me-2"></i>{{ order.created_at|date:"M d, Y H:i" }}
+            </p>
+        </div>
+        <div class="order-details-status">
+            <span class="status-badge status-{{ order.status }}">{{ order.get_status_display }}</span>
+        </div>
+    </div>
+
+    <!-- Order Details Grid -->
+    <div class="order-details-grid">
+        <!-- Order Items -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="ri-file-list-line me-2"></i>Order Items
+            </h4>
+            <div class="order-items-list">
+                {% for item in order.items.all %}
+                    <div class="order-item-detail">
+                        <div class="item-header">
+                            <div class="item-name">
+                                <i class="ri-file-text-line me-2"></i>{{ item.file_name }}
+                            </div>
+                            <div class="item-price">₹{{ item.total_price }}</div>
+                        </div>
+                        <div class="item-specifications">
+                            <div class="spec-item">
+                                <span class="spec-label">Print Type:</span>
+                                <span class="spec-value">{{ item.get_print_type_display }}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Sided Option:</span>
+                                <span class="spec-value">{{ item.get_side_option_display }}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Copies:</span>
+                                <span class="spec-value">{{ item.copies }}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Pages:</span>
+                                <span class="spec-value">{{ item.pages }}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Price per Page:</span>
+                                <span class="spec-value">₹{{ item.price_per_page }}</span>
+                            </div>
+                            {% if item.page_option == 'custom' and item.custom_pages %}
+                                <div class="spec-item">
+                                    <span class="spec-label">Custom Pages:</span>
+                                    <span class="spec-value">{{ item.custom_pages }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="ri-calculator-line me-2"></i>Order Summary
+            </h4>
+            <div class="summary-content">
+                <div class="summary-item">
+                    <span class="summary-label">Total Items:</span>
+                    <span class="summary-value">{{ order.items.count }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total Pages:</span>
+                    <span class="summary-value">{{ total_pages }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Order Date:</span>
+                    <span class="summary-value">{{ order.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+                {% if order.updated_at != order.created_at %}
+                    <div class="summary-item">
+                        <span class="summary-label">Last Updated:</span>
+                        <span class="summary-value">{{ order.updated_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                {% endif %}
+                <div class="summary-item total-amount">
+                    <span class="summary-label">Total Amount:</span>
+                    <span class="summary-value">₹{{ order.total_amount }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shop Information -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="ri-store-2-line me-2"></i>Shop Information
+            </h4>
+            <div class="shop-info-content">
+                <div class="info-item">
+                    <span class="info-label">Shop Name:</span>
+                    <span class="info-value">{{ order.shop.shop_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Owner:</span>
+                    <span class="info-value">{{ order.shop.owner_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Location:</span>
+                    <span class="info-value">{{ order.shop.area }}, {{ order.shop.city }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Contact:</span>
+                    <span class="info-value">{{ order.shop.contact_number }}</span>
+                </div>
+                {% if order.shop.gstin %}
+                    <div class="info-item">
+                        <span class="info-label">GSTIN:</span>
+                        <span class="info-value">{{ order.shop.gstin }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Order Status Timeline -->
+        <div class="details-section">
+            <h4 class="section-title">
+                <i class="ri-time-line me-2"></i>Order Status
+            </h4>
+            <div class="status-timeline">
+                <div class="timeline-item {% if order.status == 'pending' or order.status == 'confirmed' or order.status == 'processing' or order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                    <div class="timeline-icon">
+                        <i class="ri-file-add-line"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h5>Order Placed</h5>
+                        <p>{{ order.created_at|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+                <div class="timeline-item {% if order.status == 'confirmed' or order.status == 'processing' or order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                    <div class="timeline-icon">
+                        <i class="ri-check-line"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h5>Confirmed</h5>
+                        <p>Order confirmed by shop</p>
+                    </div>
+                </div>
+                <div class="timeline-item {% if order.status == 'processing' or order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                    <div class="timeline-icon">
+                        <i class="ri-printer-line"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h5>Processing</h5>
+                        <p>Printing in progress</p>
+                    </div>
+                </div>
+                <div class="timeline-item {% if order.status == 'ready' or order.status == 'completed' %}active{% endif %}">
+                    <div class="timeline-icon">
+                        <i class="ri-check-double-line"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h5>Ready for Pickup</h5>
+                        <p>Order ready for collection</p>
+                    </div>
+                </div>
+                <div class="timeline-item {% if order.status == 'completed' %}active{% endif %}">
+                    <div class="timeline-icon">
+                        <i class="ri-check-line"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h5>Completed</h5>
+                        <p>Order completed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="order-details-actions">
+        {% if order.status == 'pending' %}
+            <button type="button" class="btn btn-danger btn-cancel-order" data-order-id="{{ order.id }}">
+                <i class="ri-close-line me-2"></i>Cancel Order
+            </button>
+        {% endif %}
+        <a href="{% url 'app:shop-print' order.shop.id %}" class="btn btn-primary">
+            <i class="ri-add-line me-2"></i>Place New Order
+        </a>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="ri-close-line me-2"></i>Close
+        </button>
+    </div>
+</div> 

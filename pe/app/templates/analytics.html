@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analytics - PrintEase{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="analytics-container">
+    <!-- Analytics Header -->
+    <div class="analytics-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="analytics-title">
+                        <i class="ri-bar-chart-line me-3"></i>Analytics Dashboard
+                    </h1>
+                    <p class="analytics-subtitle">Track your shop's performance and growth</p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="analytics-actions">
+                        <a href="{% url 'app:shop-dashboard' %}" class="btn btn-outline-primary">
+                            <i class="ri-arrow-left-line me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="ri-file-list-line"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 class="metric-number">{{ total_orders }}</h3>
+                            <p class="metric-label">Total Orders</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="ri-money-dollar-circle-line"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 class="metric-number">₹{{ total_earnings|floatformat:2 }}</h3>
+                            <p class="metric-label">Total Earnings</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="ri-file-text-line"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 class="metric-number">{{ total_pages }}</h3>
+                            <p class="metric-label">Pages Printed</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="ri-user-line"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 class="metric-number">{{ unique_customers|default:0 }}</h3>
+                            <p class="metric-label">Unique Customers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts and Analytics -->
+    <div class="analytics-content">
+        <div class="container">
+            <div class="row">
+                <!-- Monthly Earnings Chart -->
+                <div class="col-lg-8">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3><i class="ri-line-chart-line me-2"></i>Monthly Earnings</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="monthlyEarningsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Status Breakdown -->
+                <div class="col-lg-4">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3><i class="ri-pie-chart-line me-2"></i>Order Status</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="orderStatusChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <!-- Daily Earnings Chart -->
+                <div class="col-lg-8">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3><i class="ri-bar-chart-line me-2"></i>Daily Earnings (Last 30 Days)</h3>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="dailyEarningsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders Table -->
+                <div class="col-lg-4">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3><i class="ri-file-list-line me-2"></i>Recent Orders</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="recent-orders-list">
+                                {% for order in recent_orders_data %}
+                                    <div class="recent-order-item">
+                                        <div class="order-info">
+                                            <div class="order-number">{{ order.order_number }}</div>
+                                            <div class="order-date">{{ order.created_at|date:"M d" }}</div>
+                                        </div>
+                                        <div class="order-amount">₹{{ order.total_amount }}</div>
+                                        <div class="order-status">
+                                            <span class="status-badge status-{{ order.status }}">
+                                                {{ order.get_status_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-muted">No recent orders</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Statistics -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="chart-card">
+                        <div class="card-header">
+                            <h3><i class="ri-information-line me-2"></i>Detailed Statistics</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h4>Monthly Breakdown</h4>
+                                    <div class="stats-table">
+                                        {% for month in monthly_earnings %}
+                                            <div class="stat-row">
+                                                <span class="stat-label">{{ month.month }}</span>
+                                                <span class="stat-value">₹{{ month.earnings|floatformat:2 }}</span>
+                                                <span class="stat-count">{{ month.orders }} orders</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4>Status Breakdown</h4>
+                                    <div class="stats-table">
+                                        {% for status in status_counts %}
+                                            <div class="stat-row">
+                                                <span class="stat-label">{{ status.status|title }}</span>
+                                                <span class="stat-value">{{ status.count }} orders</span>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Monthly Earnings Chart
+const monthlyCtx = document.getElementById('monthlyEarningsChart').getContext('2d');
+const monthlyChart = new Chart(monthlyCtx, {
+    type: 'line',
+    data: {
+        labels: [{% for month in monthly_earnings %}'{{ month.month }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Earnings (₹)',
+            data: [{% for month in monthly_earnings %}{{ month.earnings }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            borderColor: '#0891b2',
+            backgroundColor: 'rgba(8, 145, 178, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '₹' + value;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Order Status Chart
+const statusCtx = document.getElementById('orderStatusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for status in status_counts %}'{{ status.status|title }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for status in status_counts %}{{ status.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [
+                '#0891b2',
+                '#0e7490',
+                '#f97316',
+                '#dc2626',
+                '#16a34a',
+                '#7c3aed'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Daily Earnings Chart
+const dailyCtx = document.getElementById('dailyEarningsChart').getContext('2d');
+const dailyChart = new Chart(dailyCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for day in daily_earnings %}'{{ day.date|slice:"5:" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Daily Earnings (₹)',
+            data: [{% for day in daily_earnings %}{{ day.earnings }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: '#0891b2',
+            borderColor: '#0e7490',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '₹' + value;
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %} 

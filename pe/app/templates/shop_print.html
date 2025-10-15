@@ -1,75 +1,518 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Print with {{ shop.shop_name }} - PrintEase{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-3">{{ shop.shop_name }}</h2>
-    
-    <div class="card">
-        <div class="card-body">
-            <p><strong>Owner:</strong> {{ shop.owner_name }}</p>
-            <p><strong>Contact:</strong> {{ shop.contact_number }}</p>
-            <p><strong>City:</strong> {{ shop.city }}</p>
-            <p><strong>Print Prices:</strong> B/W - ₹{{ shop.bw_price }} | Color - ₹{{ shop.color_price }}</p>
-            <br>
-            <button class="btn btn-success mt-3" id="upload-print-btn">Upload & Print</button>
-        </div>
-    </div>
-    <br>
-    <!-- Hidden Print Form Section -->
-    <div id="print-form-section" class="mt-4" style="display: none;">
-        <h3>Upload Print Files</h3>
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div id="file-upload-container">
-                <div class="file-upload-form">
-                    <input type="file" name="document[]" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx" required>
-                    <select name="page_option" class="form-control page-option">
-                        <option value="full">Full Document</option>
-                        <option value="custom">Custom Pages</option>
-                    </select>
-                    <input type="text" name="custom_pages" class="form-control custom-pages" placeholder="Enter page numbers (e.g., 1-3,5,7-10)" style="display: none;">
-                    <input type="number" name="copies" class="form-control copies" min="1" value="1">
-                    <select name="print_type" class="form-control">
-                        <option value="bw">Black & White</option>
-                        <option value="color">Color</option>
-                    </select>
-                    <select name="side_option" class="form-control">
-                        <option value="single">Single-Sided</option>
-                        <option value="double">Double-Sided</option>
-                    </select>
-                    <p class="calculated-price text-primary">Price: ₹0</p>
+<div class="print-container">
+    <!-- Shop Header -->
+    <div class="print-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="shop-info">
+                        <div class="shop-icon">
+                            <i class="ri-store-2-line"></i>
+                        </div>
+                        <div class="shop-details text-white">
+                            <h1 class="shop-name">{{ shop.shop_name }}</h1>
+                            <p class="shop-owner text-white">
+                                <i class="ri-user-line me-2"></i>{{ shop.owner_name }}
+                            </p>
+                            <div class="shop-location text-white">
+                                <i class="ri-map-pin-line me-2"></i>{{ shop.area }}, {{ shop.city }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="pricing-summary">
+                        <div class="price-item">
+                            <span class="price-label">B/W Print</span>
+                            <span class="price-value text-white">₹{{ shop.bw_price|floatformat:2|default:"--" }}</span>
+                        </div>
+                        <div class="price-item">
+                            <span class="price-label">Color Print</span>
+                            <span class="price-value text-white">₹{{ shop.color_price|floatformat:2|default:"--" }}</span>
+                        </div>
+                        <!-- Hidden fields to pass actual prices to JavaScript -->
+                        <input type="hidden" id="actualBwPrice" value="{{ shop.bw_price|default:0 }}">
+                        <input type="hidden" id="actualColorPrice" value="{{ shop.color_price|default:0 }}">
+                        <div class="price-note">
+                            <small><i class="ri-information-line me-1"></i>Shop's actual prices used for calculation</small>
+                        </div>
+                        <div class="price-debug" style="display: none;">
+                            <small>Debug: B/W: ₹{{ shop.bw_price|floatformat:2 }}, Color: ₹{{ shop.color_price|floatformat:2 }}</small>
+                            <br><small>Raw values: B/W: {{ shop.bw_price }}, Color: {{ shop.color_price }}</small>
+                            <br><small>Shop ID: {{ shop.id }}, Shop Name: {{ shop.shop_name }}</small>
+                            <br><small>Frontend JS variables: B/W: <span id="jsBwPrice">Loading...</span>, Color: <span id="jsColorPrice">Loading...</span></small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-info mt-2" onclick="toggleDebug()">
+                            <i class="ri-bug-line me-1"></i>Show Debug Info
+                        </button>
+                    </div>
                 </div>
             </div>
-            <br>
-            <button type="button" id="add-more-files" class="btn btn-secondary mt-3">Add More Files</button><br>
-            <button type="submit" class="btn btn-primary mt-3">Proceed to Checkout</button>
-        </form>
+        </div>
+    </div>
+
+    <!-- Print Form Section -->
+    <div class="print-form-section">
+        <div class="container">
+            <div class="print-form-card">
+                <div class="form-header">
+                    <h2><i class="ri-upload-line me-2"></i>Upload Your Documents</h2>
+                    <p>Upload your files and customize your printing requirements</p>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data" id="printForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="frontend_total_price" id="frontendTotalPrice" value="0">
+                    
+                    <!-- File Upload Container -->
+                    <div id="fileUploadContainer">
+                        <div class="file-upload-item" data-file-index="0">
+                            <div class="upload-header">
+                                <h4>Document #1</h4>
+                                <button type="button" class="btn-remove-file" onclick="removeFile(this)">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="upload-content">
+                                <!-- File Input -->
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="ri-file-line me-2"></i>Select File
+                                    </label>
+                                    <input type="file" name="document[]" class="form-control file-input" 
+                                           accept=".pdf,.doc,.docx,.txt,.ppt,.pptx" required>
+                                    <div class="file-info"></div>
+                                </div>
+
+                                <!-- Print Options -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="ri-file-list-line me-2"></i>Page Selection
+                                            </label>
+                                            <select name="page_option" class="form-control page-option">
+                                                <option value="full">Full Document</option>
+                                                <option value="custom">Custom Pages</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="ri-number-1 me-2"></i>Number of Copies
+                                            </label>
+                                            <input type="number" name="copies" class="form-control copies" 
+                                                   min="1" value="1" max="100">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="ri-palette-line me-2"></i>Print Type
+                                            </label>
+                                            <select name="print_type" class="form-control print-type">
+                                                <option value="bw">Black & White</option>
+                                                <option value="color">Color</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                <i class="ri-file-copy-line me-2"></i>Sided Option
+                                            </label>
+                                            <select name="side_option" class="form-control side-option">
+                                                <option value="single">Single-Sided</option>
+                                                <option value="double">Double-Sided</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Pages Input -->
+                                <div class="form-group custom-pages-group" style="display: none;">
+                                    <label class="form-label">
+                                        <i class="ri-edit-line me-2"></i>Custom Pages
+                                    </label>
+                                    <input type="text" name="custom_pages" class="form-control custom-pages" 
+                                           placeholder="e.g., 1-3,5,7-10">
+                                    <small class="form-text">Enter page numbers separated by commas. Use hyphens for ranges.</small>
+                                </div>
+
+                                <!-- Price Calculation -->
+                                <div class="price-calculation">
+                                    <div class="price-breakdown">
+                                        <span class="price-label">Estimated Price:</span>
+                                        <span class="price-value">₹0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add More Files Button -->
+                    <div class="add-files-section">
+                        <button type="button" id="addMoreFiles" class="btn btn-outline-primary">
+                            <i class="ri-add-line me-2"></i>Add Another Document
+                        </button>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="order-summary">
+                        <div class="summary-header">
+                            <h3><i class="ri-calculator-line me-2"></i>Order Summary</h3>
+                        </div>
+                        <div class="summary-content">
+                            <div class="summary-item">
+                                <span>Total Documents:</span>
+                                <span id="totalDocuments">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Total Pages:</span>
+                                <span id="totalPages">0</span>
+                            </div>
+                            <div class="summary-item total-price">
+                                <span>Total Price:</span>
+                                <span id="totalPrice">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-submit-order">
+                            <i class="ri-send-plane-line me-2"></i>Place Order
+                        </button>
+                        <a href="{% url 'app:user-dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="ri-arrow-left-line me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-document.getElementById("upload-print-btn").addEventListener("click", function() {
-    document.getElementById("print-form-section").style.display = "block";
+let fileIndex = 1;
+let bwPrice = 0;
+let colorPrice = 0;
+
+// Get actual prices from hidden fields and initialize
+document.addEventListener('DOMContentLoaded', function() {
+    bwPrice = parseFloat(document.getElementById('actualBwPrice').value) || 0;
+    colorPrice = parseFloat(document.getElementById('actualColorPrice').value) || 0;
+    
+    console.log('Actual prices loaded from hidden fields:');
+    console.log('B/W Price:', bwPrice);
+    console.log('Color Price:', colorPrice);
+    
+    // Update debug display
+    document.getElementById('jsBwPrice').textContent = bwPrice;
+    document.getElementById('jsColorPrice').textContent = colorPrice;
+    
+    // Initialize calculations
+    updateSummary();
+    calculatePrice();
 });
 
-document.addEventListener("change", function(event) {
-    if (event.target.classList.contains("page-option")) {
-        let customInput = event.target.closest(".file-upload-form").querySelector(".custom-pages");
-        if (event.target.value === "custom") {
-            customInput.style.display = "block";
-        } else {
-            customInput.style.display = "none";
-            customInput.value = "";
+// Store file page counts
+const filePageCounts = {};
+
+// File input change handler
+document.addEventListener('change', function(event) {
+    if (event.target.classList.contains('file-input')) {
+        const file = event.target.files[0];
+        const fileInfo = event.target.parentElement.querySelector('.file-info');
+        const fileItem = event.target.closest('.file-upload-item');
+        const fileIndex = fileItem.dataset.fileIndex;
+        
+        if (file) {
+            // Show loading state
+            fileInfo.innerHTML = `
+                <div class="file-details">
+                    <i class="ri-loader-4-line fa-spin"></i>
+                    <span>${file.name}</span>
+                    <small>(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                    <small>Calculating pages...</small>
+                </div>
+            `;
+            
+            // Calculate pages for different file types
+            if (file.type === 'application/pdf') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const typedarray = new Uint8Array(e.target.result);
+                    
+                    // Load PDF.js library dynamically
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                    script.onload = function() {
+                        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                        
+                        pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                            const pageCount = pdf.numPages;
+                            filePageCounts[fileIndex] = pageCount;
+                            
+                            fileInfo.innerHTML = `
+                                <div class="file-details">
+                                    <i class="ri-file-text-line"></i>
+                                    <span>${file.name}</span>
+                                    <small>(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                                    <small class="text-success">${pageCount} pages detected</small>
+                                </div>
+                            `;
+                            
+                            calculatePrice();
+                        }).catch(function(error) {
+                            console.error('Error reading PDF:', error);
+                            filePageCounts[fileIndex] = 10; // Default fallback
+                            fileInfo.innerHTML = `
+                                <div class="file-details">
+                                    <i class="ri-file-text-line"></i>
+                                    <span>${file.name}</span>
+                                    <small>(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                                <small class="text-warning">Using default page count (10)</small>
+                                </div>
+                            `;
+                            calculatePrice();
+                        });
+                    };
+                    document.head.appendChild(script);
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                // Estimate pages for other file types
+                let estimatedPages = 10;
+                let pageMessage = "Using default page count (10)";
+                
+                if (file.name.toLowerCase().endsWith('.doc') || file.name.toLowerCase().endsWith('.docx')) {
+                    const fileSizeMB = file.size / (1024 * 1024);
+                    estimatedPages = Math.max(1, Math.min(50, Math.floor(fileSizeMB * 2)));
+                    pageMessage = `Estimated ${estimatedPages} pages (Word document)`;
+                } else if (file.name.toLowerCase().endsWith('.ppt') || file.name.toLowerCase().endsWith('.pptx')) {
+                    const fileSizeMB = file.size / (1024 * 1024);
+                    estimatedPages = Math.max(1, Math.min(30, Math.floor(fileSizeMB * 3)));
+                    pageMessage = `Estimated ${estimatedPages} pages (PowerPoint)`;
+                } else if (file.name.toLowerCase().endsWith('.txt')) {
+                    estimatedPages = 5;
+                    pageMessage = "Estimated 5 pages (Text file)";
+                }
+                
+                filePageCounts[fileIndex] = estimatedPages;
+                fileInfo.innerHTML = `
+                    <div class="file-details">
+                        <i class="ri-file-text-line"></i>
+                        <span>${file.name}</span>
+                        <small>(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                        <small class="text-info">${pageMessage}</small>
+                    </div>
+                `;
+                calculatePrice();
+            }
         }
     }
 });
 
-document.getElementById("add-more-files").addEventListener("click", function() {
-    let container = document.getElementById("file-upload-container");
-    let newForm = container.firstElementChild.cloneNode(true);
-    newForm.querySelector(".custom-pages").style.display = "none";
-    newForm.querySelector(".custom-pages").value = "";
-    container.appendChild(newForm);
+// Page option change handler
+document.addEventListener('change', function(event) {
+    if (event.target.classList.contains('page-option')) {
+        const customPagesGroup = event.target.closest('.file-upload-item').querySelector('.custom-pages-group');
+        if (event.target.value === 'custom') {
+            customPagesGroup.style.display = 'block';
+        } else {
+            customPagesGroup.style.display = 'none';
+        }
+        calculatePrice();
+    }
 });
+
+// Print type and copies change handler
+document.addEventListener('change', function(event) {
+    if (event.target.classList.contains('print-type') || 
+        event.target.classList.contains('copies') || 
+        event.target.classList.contains('side-option')) {
+        calculatePrice();
+    }
+});
+
+// Custom pages input handler
+document.addEventListener('input', function(event) {
+    if (event.target.classList.contains('custom-pages')) {
+        calculatePrice();
+    }
+});
+
+// Add more files
+document.getElementById('addMoreFiles').addEventListener('click', function() {
+    const container = document.getElementById('fileUploadContainer');
+    const template = container.firstElementChild.cloneNode(true);
+    
+    // Update the file index
+    template.dataset.fileIndex = fileIndex;
+    template.querySelector('h4').textContent = `Document #${fileIndex + 1}`;
+    
+    // Clear all inputs
+    template.querySelectorAll('input, select').forEach(input => {
+        if (input.type === 'file') {
+            input.value = '';
+        } else if (input.name === 'copies') {
+            input.value = '1';
+        } else if (input.name === 'page_option') {
+            input.value = 'full';
+        } else if (input.name === 'print_type') {
+            input.value = 'bw';
+        } else if (input.name === 'side_option') {
+            input.value = 'single';
+        } else if (input.name === 'custom_pages') {
+            input.value = '';
+        }
+    });
+    
+    // Hide custom pages group
+    template.querySelector('.custom-pages-group').style.display = 'none';
+    
+    // Clear file info
+    template.querySelector('.file-info').innerHTML = '';
+    
+    container.appendChild(template);
+    fileIndex++;
+    updateSummary();
+});
+
+// Remove file
+function removeFile(button) {
+    const fileItem = button.closest('.file-upload-item');
+    if (document.querySelectorAll('.file-upload-item').length > 1) {
+        fileItem.remove();
+        updateSummary();
+        calculatePrice();
+    }
+}
+
+// Calculate price for a single file
+function calculateFilePrice(fileItem) {
+    const pageOption = fileItem.querySelector('.page-option').value;
+    const customPages = fileItem.querySelector('.custom-pages').value;
+    const copies = parseInt(fileItem.querySelector('.copies').value) || 1;
+    const printType = fileItem.querySelector('.print-type').value;
+    const sideOption = fileItem.querySelector('.side-option').value;
+    const fileIndex = fileItem.dataset.fileIndex;
+    
+    let pages = filePageCounts[fileIndex] || 10; // Use detected page count or default
+    
+    if (pageOption === 'custom' && customPages) {
+        pages = parseCustomPages(customPages);
+    }
+    
+    // Use shop's actual prices
+    let pricePerPage = 0;
+    if (printType === 'bw') {
+        pricePerPage = bwPrice || 0;
+    } else {
+        pricePerPage = colorPrice || 0;
+    }
+    
+    let totalPrice = pages * copies * pricePerPage;
+    
+    // Apply sided option discount (20% off)
+    if (sideOption === 'double') {
+        totalPrice = totalPrice * 0.8;
+    }
+    
+    // Debug logging
+    console.log(`File: ${fileItem.querySelector('.file-input').files[0]?.name || 'No file'}`);
+    console.log(`Pages: ${pages}`);
+    console.log(`Copies: ${copies}`);
+    console.log(`Print Type: ${printType}`);
+    console.log(`Price per page: ${pricePerPage}`);
+    console.log(`Side option: ${sideOption}`);
+    console.log(`Item total: ${totalPrice}`);
+    console.log('---');
+    
+    return totalPrice;
+}
+
+// Parse custom pages string
+function parseCustomPages(pagesString) {
+    let totalPages = 0;
+    const parts = pagesString.split(',');
+    
+    for (let part of parts) {
+        if (part.includes('-')) {
+            const [start, end] = part.split('-').map(Number);
+            totalPages += (end - start + 1);
+        } else {
+            totalPages += 1;
+        }
+    }
+    
+    return totalPages;
+}
+
+// Calculate total price
+function calculatePrice() {
+    let totalPrice = 0;
+    let totalPages = 0;
+    
+    document.querySelectorAll('.file-upload-item').forEach(fileItem => {
+        const filePrice = calculateFilePrice(fileItem);
+        totalPrice += filePrice;
+        
+        // Calculate pages for summary
+        const pageOption = fileItem.querySelector('.page-option').value;
+        const customPages = fileItem.querySelector('.custom-pages').value;
+        const copies = parseInt(fileItem.querySelector('.copies').value) || 1;
+        const fileIndex = fileItem.dataset.fileIndex;
+        
+        let pages = filePageCounts[fileIndex] || 10;
+        if (pageOption === 'custom' && customPages) {
+            pages = parseCustomPages(customPages);
+        }
+        totalPages += pages * copies;
+    });
+    
+    // Update price displays
+    document.querySelectorAll('.price-value').forEach(priceElement => {
+        priceElement.textContent = `₹${totalPrice.toFixed(2)}`;
+    });
+    
+    document.getElementById('totalPrice').textContent = `₹${totalPrice.toFixed(2)}`;
+    document.getElementById('totalPages').textContent = totalPages;
+    
+    // Update hidden field with frontend calculated price
+    document.getElementById('frontendTotalPrice').value = totalPrice.toFixed(2);
+    
+    return totalPrice;
+}
+
+// Update summary
+function updateSummary() {
+    const totalDocuments = document.querySelectorAll('.file-upload-item').length;
+    document.getElementById('totalDocuments').textContent = totalDocuments;
+}
+
+// Toggle debug info
+function toggleDebug() {
+    const debugElement = document.querySelector('.price-debug');
+    if (debugElement.style.display === 'none') {
+        debugElement.style.display = 'block';
+    } else {
+        debugElement.style.display = 'none';
+    }
+}
+
+// This is now handled in the main DOMContentLoaded event above
 </script>
 {% endblock %}
 

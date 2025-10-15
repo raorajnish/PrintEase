@@ -1,31 +1,250 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}
-Student dashboard
-{% endblock %}
+{% block title %}User Dashboard - PrintEase{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-3">Available Print Shops</h2>
-    <div class="row">
-        {% for shop in shops %}
-            <div class="col-md-4">
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ shop.shop_name }}</h5>
-                        <p class="card-text"><strong>Owner:</strong> {{ shop.owner_name }}</p>
-                        <p class="card-text"><strong>City:</strong> {{ shop.city }}</p>
-                        <p class="card-text"><strong>Contact:</strong> {{ shop.contact_number }}</p>
-                        <p class="card-text"><strong>Area:</strong> {{ shop.area }}</p>
-                        <p class="card-text"><strong>B/W Price:</strong> {{shop.bw_price}} Rs</p>
-                        <p class="card-text"><strong>Color Price:</strong> {{ shop.color_price }} Rs</p>
-                        <a href="{% url 'app:shop-print' shop.id %}" class="btn btn-primary">Select Shop</a>
+<div class="dashboard-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="dashboard-title">
+                        <i class="ri-dashboard-line me-3"></i>Welcome to Your Dashboard
+                    </h1>
+                    <p class="dashboard-subtitle">Find and connect with the best print shops in your area</p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="dashboard-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ shops.count }}</span>
+                            <span class="stat-label text-white">Available Shops</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        {% empty %}
-            <p class="text-danger">No registered print shops available.</p>
-        {% endfor %}
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="search-section">
+        <div class="container">
+            <div class="search-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="search-box">
+                            <i class="ri-search-line search-icon"></i>
+                            <input type="text" id="shopSearch" class="search-input" placeholder="Search for print shops by name, area, or city...">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="filter-buttons">
+                            <button class="btn btn-filter active" data-filter="all">
+                                <i class="ri-apps-line me-2"></i>All Shops
+                            </button>
+                            <button class="btn btn-filter" data-filter="nearby">
+                                <i class="ri-map-pin-line me-2"></i>Nearby
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shops Grid -->
+    <div class="shops-section">
+        <div class="container">
+            {% if shops %}
+                <div class="row" id="shopsGrid">
+                    {% for shop in shops %}
+                        <div class="col-lg-4 col-md-6 mb-4 shop-card-wrapper">
+                            <div class="shop-card">
+                                <div class="shop-card-header">
+                                    <div class="shop-icon">
+                                        <i class="ri-store-2-line"></i>
+                                    </div>
+                                    <div class="shop-status">
+                                        <span class="status-badge online">Online</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="shop-card-body">
+                                    <h3 class="shop-name">{{ shop.shop_name }}</h3>
+                                    <p class="shop-owner">
+                                        <i class="ri-user-line me-2"></i>{{ shop.owner_name }}
+                                    </p>
+                                    
+                                    <div class="shop-location">
+                                        <i class="ri-map-pin-line me-2"></i>
+                                        <span>{{ shop.area }}, {{ shop.city }}</span>
+                                    </div>
+                                    
+                                    <div class="shop-contact">
+                                        <i class="ri-phone-line me-2"></i>
+                                        <span>{{ shop.contact_number }}</span>
+                                    </div>
+                                    
+                                    {% if shop.gstin %}
+                                        <div class="shop-gstin">
+                                            <i class="ri-barcode-line me-2"></i>
+                                            <span>GSTIN: {{ shop.gstin }}</span>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="shop-hours">
+                                        <i class="ri-time-line me-2"></i>
+                                        <span>{{ shop.start_time|time:"H:i" }} - {{ shop.end_time|time:"H:i" }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="shop-pricing">
+                                    <div class="pricing-item">
+                                        <span class="pricing-label">B/W Print</span>
+                                        <span class="pricing-value">₹{{ shop.bw_price|default:"--" }}</span>
+                                    </div>
+                                    <div class="pricing-item">
+                                        <span class="pricing-label">Color Print</span>
+                                        <span class="pricing-value">₹{{ shop.color_price|default:"--" }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="shop-card-footer">
+                                    <a href="{% url 'app:shop-print' shop.id %}" class="btn btn-primary btn-select-shop">
+                                        <i class="ri-arrow-right-line me-2"></i>Select Shop
+                                    </a>
+                                    <button class="btn btn-outline-secondary btn-shop-details" data-shop-id="{{ shop.id }}">
+                                        <i class="ri-information-line me-2"></i>Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="ri-store-2-line"></i>
+                    </div>
+                    <h3>No Print Shops Available</h3>
+                    <p>There are currently no registered print shops in your area. Check back later or contact us for assistance.</p>
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        <i class="ri-refresh-line me-2"></i>Refresh
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="ri-history-line"></i>
+                        </div>
+                        <h4>Recent Orders</h4>
+                        <p>View your previous print orders and track their status</p>
+                        <a href="{% url 'app:past-orders' %}" class="btn btn-outline-primary">View History</a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="ri-heart-line"></i>
+                        </div>
+                        <h4>Favorite Shops</h4>
+                        <p>Save your preferred print shops for quick access</p>
+                        <button class="btn btn-outline-primary">Manage Favorites</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="action-card">
+                        <div class="action-icon">
+                            <i class="ri-customer-service-line"></i>
+                        </div>
+                        <h4>Get Help</h4>
+                        <p>Need assistance? Contact our support team</p>
+                        <button class="btn btn-outline-primary">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Shop Details Modal -->
+<div class="modal fade" id="shopDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Shop Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Shop details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('shopSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const shopCards = document.querySelectorAll('.shop-card-wrapper');
+    
+    shopCards.forEach(card => {
+        const shopName = card.querySelector('.shop-name').textContent.toLowerCase();
+        const shopArea = card.querySelector('.shop-location').textContent.toLowerCase();
+        const shopCity = card.querySelector('.shop-location').textContent.toLowerCase();
+        
+        if (shopName.includes(searchTerm) || shopArea.includes(searchTerm) || shopCity.includes(searchTerm)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+
+// Filter functionality
+document.querySelectorAll('.btn-filter').forEach(button => {
+    button.addEventListener('click', function() {
+        // Remove active class from all buttons
+        document.querySelectorAll('.btn-filter').forEach(btn => btn.classList.remove('active'));
+        // Add active class to clicked button
+        this.classList.add('active');
+        
+        // Add filter logic here
+        const filter = this.getAttribute('data-filter');
+        // Implement filtering based on the filter value
+    });
+});
+
+// Shop details modal
+document.querySelectorAll('.btn-shop-details').forEach(button => {
+    button.addEventListener('click', function() {
+        const shopId = this.getAttribute('data-shop-id');
+        
+        // Show loading state
+        const modal = new bootstrap.Modal(document.getElementById('shopDetailsModal'));
+        const modalBody = document.querySelector('#shopDetailsModal .modal-body');
+        modalBody.innerHTML = '<div class="text-center"><i class="ri-loader-4-line fa-spin" style="font-size: 2rem; color: #0891b2;"></i><p class="mt-2">Loading shop details...</p></div>';
+        modal.show();
+        
+        // Load shop details via AJAX
+        fetch(`/shop-details-modal/${shopId}/`)
+            .then(response => response.text())
+            .then(html => {
+                modalBody.innerHTML = html;
+            })
+            .catch(error => {
+                modalBody.innerHTML = '<div class="text-center text-danger"><i class="ri-error-warning-line" style="font-size: 2rem;"></i><p class="mt-2">Error loading shop details. Please try again.</p></div>';
+            });
+    });
+});
+</script>
 {% endblock %}
